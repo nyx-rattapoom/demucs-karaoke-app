@@ -4,6 +4,10 @@ try:
     from .settings import (
         DEFAULT_DEMUCS_DEVICE,
         DEFAULT_DEMUCS_MODEL,
+        DEFAULT_DEMUCS_JOBS,
+        DEFAULT_DEMUCS_OVERLAP,
+        DEFAULT_DEMUCS_SEGMENT,
+        DEFAULT_DEMUCS_SHIFTS,
         DEFAULT_MP3_BITRATE,
         DEFAULT_OUTPUT_FORMAT,
         DEFAULT_SEPARATION_BACKEND,
@@ -18,6 +22,10 @@ except ImportError:
     from settings import (
         DEFAULT_DEMUCS_DEVICE,
         DEFAULT_DEMUCS_MODEL,
+        DEFAULT_DEMUCS_JOBS,
+        DEFAULT_DEMUCS_OVERLAP,
+        DEFAULT_DEMUCS_SEGMENT,
+        DEFAULT_DEMUCS_SHIFTS,
         DEFAULT_MP3_BITRATE,
         DEFAULT_OUTPUT_FORMAT,
         DEFAULT_SEPARATION_BACKEND,
@@ -37,6 +45,10 @@ class SeparateConfig(BaseModel):
     device: Literal["cuda", "cpu"] = DEFAULT_DEMUCS_DEVICE
     output_format: Literal["wav", "mp3"] = DEFAULT_OUTPUT_FORMAT
     mp3_bitrate: int | None = Field(default=None, ge=64, le=320)
+    segment: float | None = Field(default=DEFAULT_DEMUCS_SEGMENT, ge=1, le=60)
+    shifts: int | None = Field(default=DEFAULT_DEMUCS_SHIFTS, ge=0, le=10)
+    jobs: int | None = Field(default=DEFAULT_DEMUCS_JOBS, ge=1, le=4)
+    overlap: float | None = Field(default=DEFAULT_DEMUCS_OVERLAP, ge=0.0, le=0.99)
     lyrics_text: str | None = None
     lyrics_format: Literal["lrc", "srt", "txt"] | None = None
     transcription_model: str = DEFAULT_WHISPERX_TRANSCRIPTION_MODEL

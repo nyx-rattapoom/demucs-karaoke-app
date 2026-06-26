@@ -42,6 +42,10 @@ class DemucsSettings(BaseSettings):
         default="ffmpeg",
         validation_alias="SHERPA_SPLEETER_FFMPEG_PATH",
     )
+    demucs_segment: float | None = None
+    demucs_shifts: int | None = None
+    demucs_jobs: int | None = None
+    demucs_overlap: float | None = None
     whisperx_transcription_model: str = "tiny"
     whisperx_align_language: str = "en"
     whisperx_detect_language: bool = False
@@ -84,6 +88,10 @@ DEFAULT_OUTPUT_FORMAT = settings.demucs_output_format
 DEFAULT_MP3_BITRATE = settings.demucs_mp3_bitrate
 DEFAULT_SEPARATION_BACKEND = settings.separation_backend
 DEFAULT_SHERPA_SPLEETER_MODEL = settings.sherpa_spleeter_model
+DEFAULT_DEMUCS_SEGMENT = settings.demucs_segment
+DEFAULT_DEMUCS_SHIFTS = settings.demucs_shifts
+DEFAULT_DEMUCS_JOBS = settings.demucs_jobs
+DEFAULT_DEMUCS_OVERLAP = settings.demucs_overlap
 DEFAULT_WHISPERX_TRANSCRIPTION_MODEL = settings.whisperx_transcription_model
 DEFAULT_WHISPERX_ALIGN_LANGUAGE = settings.whisperx_align_language
 DEFAULT_WHISPERX_DETECT_LANGUAGE = settings.whisperx_detect_language

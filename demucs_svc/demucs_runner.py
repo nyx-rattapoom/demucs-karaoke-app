@@ -55,6 +55,10 @@ def _build_command(input_path: Path, output_dir: Path, config: SeparateConfig) -
             requested_device=config.device,
             output_format=config.output_format,
             mp3_bitrate=config.mp3_bitrate,
+            segment=config.segment,
+            shifts=config.shifts,
+            jobs=config.jobs,
+            overlap=config.overlap,
         )
     )
 

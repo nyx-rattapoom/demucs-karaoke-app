@@ -18,6 +18,10 @@ class SeparationRequest:
     requested_device: str
     output_format: str
     mp3_bitrate: int | None
+    segment: float | None = None
+    shifts: int | None = None
+    jobs: int | None = None
+    overlap: float | None = None
 
 
 @dataclass(frozen=True)

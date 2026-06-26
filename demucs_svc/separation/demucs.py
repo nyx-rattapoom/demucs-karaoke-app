@@ -43,6 +43,14 @@ def build_command(request: SeparationRequest) -> list[str]:
     ]
     if request.output_format == "mp3":
         command.extend(["--mp3", "--mp3-bitrate", str(request.mp3_bitrate)])
+    if request.segment:
+        command.extend(["--segment", str(request.segment)])
+    if request.shifts is not None:
+        command.extend(["--shifts", str(request.shifts)])
+    if request.jobs:
+        command.extend(["-j", str(request.jobs)])
+    if request.overlap is not None:
+        command.extend(["--overlap", str(request.overlap)])
     command.append(str(request.input_path))
     return command
 

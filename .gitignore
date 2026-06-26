@@ -77,3 +77,8 @@ Thumbs.db
 .artifacts/
 static/docs/
 docs-site/site/
+
+# Runtime data dirs
+cache/
+media/
+demucs_svc/io/
