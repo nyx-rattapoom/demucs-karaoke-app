@@ -71,6 +71,10 @@ class Settings(BaseSettings):
     demucs_device: str = "cuda"
     demucs_output_format: str = "wav"
     demucs_mp3_bitrate: int = 320
+    demucs_segment: float | None = None
+    demucs_shifts: int | None = None
+    demucs_jobs: int | None = None
+    demucs_overlap: float | None = None
     demucs_direct_media_max_mb: int = 500
     demucs_poll_interval_seconds: float = 1.0
     whisperx_transcription_model: str = "tiny"

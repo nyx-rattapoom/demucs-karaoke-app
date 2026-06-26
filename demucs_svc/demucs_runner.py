@@ -65,6 +65,14 @@ def _build_command(input_path: Path, output_dir: Path, config: SeparateConfig) -
     ]
     if config.output_format == "mp3":
         cmd.extend(["--mp3", "--mp3-bitrate", str(config.mp3_bitrate)])
+    if config.segment:
+        cmd.extend(["--segment", str(config.segment)])
+    if config.shifts is not None:
+        cmd.extend(["--shifts", str(config.shifts)])
+    if config.jobs:
+        cmd.extend(["-j", str(config.jobs)])
+    if config.overlap is not None:
+        cmd.extend(["--overlap", str(config.overlap)])
     cmd.append(str(input_path))
     return cmd
 

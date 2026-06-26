@@ -89,6 +89,14 @@ class DemucsClient:
         }
         if settings.demucs_output_format == "mp3":
             data["mp3_bitrate"] = str(settings.demucs_mp3_bitrate)
+        if settings.demucs_segment:
+            data["segment"] = str(settings.demucs_segment)
+        if settings.demucs_shifts is not None:
+            data["shifts"] = str(settings.demucs_shifts)
+        if settings.demucs_jobs:
+            data["jobs"] = str(settings.demucs_jobs)
+        if settings.demucs_overlap is not None:
+            data["overlap"] = str(settings.demucs_overlap)
         if lyrics_text:
             data["lyrics_text"] = lyrics_text
         if lyrics_format:
