@@ -43,6 +43,10 @@ class ProcessingTaskService:
         ProcessingTaskStatus.PROCESSING.value,
     )
     CANCELLABLE_STATUSES = ACTIVE_STATUSES
+    RETRYABLE_STATUSES = (
+        ProcessingTaskStatus.FAILED.value,
+        ProcessingTaskStatus.CANCELED.value,
+    )
 
     def get_or_create_queue_task(self, db: Session, queue_item_id: int) -> ProcessingTask:
         """Return an existing active queue task or create one."""
@@ -77,17 +81,50 @@ class ProcessingTaskService:
         db.refresh(task)
         return task
 
-    def get_or_create_media_task(self, db: Session, media_item_id: int) -> ProcessingTask:
+    def get_or_create_media_task(
+        self,
+        db: Session,
+        media_item_id: int,
+        *,
+        whisperx_align_language_override: str | None = None,
+    ) -> ProcessingTask:
         """Return an existing active media karaoke task or create one."""
-        return self._get_or_create_media_task(db, media_item_id, task_type="media_karaoke")
+        return self._get_or_create_media_task(
+            db,
+            media_item_id,
+            task_type="media_karaoke",
+            whisperx_align_language_override=whisperx_align_language_override,
+        )
 
-    def get_or_create_media_karaoke_align_task(self, db: Session, media_item_id: int) -> ProcessingTask:
+    def get_or_create_media_karaoke_align_task(
+        self,
+        db: Session,
+        media_item_id: int,
+        *,
+        whisperx_align_language_override: str | None = None,
+    ) -> ProcessingTask:
         """Return an existing active media separation+alignment task or create one."""
-        return self._get_or_create_media_task(db, media_item_id, task_type="media_karaoke_align")
+        return self._get_or_create_media_task(
+            db,
+            media_item_id,
+            task_type="media_karaoke_align",
+            whisperx_align_language_override=whisperx_align_language_override,
+        )
 
-    def get_or_create_media_lyrics_align_task(self, db: Session, media_item_id: int) -> ProcessingTask:
+    def get_or_create_media_lyrics_align_task(
+        self,
+        db: Session,
+        media_item_id: int,
+        *,
+        whisperx_align_language_override: str | None = None,
+    ) -> ProcessingTask:
         """Return an existing active media lyrics alignment task or create one."""
-        return self._get_or_create_media_task(db, media_item_id, task_type="media_lyrics_align")
+        return self._get_or_create_media_task(
+            db,
+            media_item_id,
+            task_type="media_lyrics_align",
+            whisperx_align_language_override=whisperx_align_language_override,
+        )
 
     def create_media_vocal_sync_prepare_task(
         self,
@@ -184,7 +221,11 @@ class ProcessingTaskService:
         media_item_id: int,
         *,
         task_type: str,
+        whisperx_align_language_override: str | None = None,
     ) -> ProcessingTask:
+        normalized_override = self._normalize_whisperx_align_language_override(
+            whisperx_align_language_override
+        )
         active = (
             db.query(ProcessingTask)
             .filter(
@@ -197,6 +238,10 @@ class ProcessingTaskService:
             .first()
         )
         if active is not None:
+            if active.whisperx_align_language_override != normalized_override:
+                active.whisperx_align_language_override = normalized_override
+                db.commit()
+                db.refresh(active)
             return active
 
         media_item = db.query(MediaItem).filter(MediaItem.id == media_item_id).first()
@@ -206,6 +251,7 @@ class ProcessingTaskService:
             task_type=task_type,
             source_kind="library_media" if not media_item.youtube_id else "uploaded_media",
             target_media_item_id=media_item_id,
+            whisperx_align_language_override=normalized_override,
             status=ProcessingTaskStatus.PENDING.value,
             stage="queued",
         )
@@ -213,6 +259,13 @@ class ProcessingTaskService:
         db.commit()
         db.refresh(task)
         return task
+
+    @staticmethod
+    def _normalize_whisperx_align_language_override(value: str | None) -> str | None:
+        if not isinstance(value, str):
+            return None
+        normalized = " ".join(value.split()).strip().lower()
+        return normalized if normalized not in {"", "auto", "default"} else None
 
     def list_tasks(
         self,
@@ -561,20 +614,30 @@ class ProcessingTaskService:
         db: Session,
         task_id: int,
     ) -> ProcessingTask:
-        """Retry a failed task."""
+        """Retry a failed or canceled task."""
         task = self.get_task(db, task_id)
         if task is None:
             raise ValueError(f"Task not found: {task_id}")
 
-        if task.status != ProcessingTaskStatus.FAILED.value:
-            raise ValueError("Only failed tasks can be retried")
+        if task.status not in self.RETRYABLE_STATUSES:
+            raise ValueError("Only failed or canceled tasks can be retried")
 
         task.status = ProcessingTaskStatus.PENDING.value
+        task.stage = "queued"
         task.last_error_summary = None
         task.last_error_detail = None
+        task.started_at = None
+        task.finished_at = None
         task.updated_at = utc_now_naive()
         db.commit()
         db.refresh(task)
+        await task_stream_manager.clear_task(task.id)
+        await task_stream_manager.ensure_task(
+            task.id,
+            status=task.status,
+            stage=task.stage,
+        )
+        await self._sync_queue_side_effects(db, task)
         return task
 
     async def delete_canceled_task(self, db: Session, task_id: int) -> dict[str, int | None]:
@@ -675,10 +738,10 @@ class ProcessingTaskService:
         requester_id: str | None = None,
     ) -> bool:
         """Return whether the current viewer may retry the task."""
+        if task.status not in self.RETRYABLE_STATUSES:
+            return False
         if is_admin:
             return True
-        if task.status != ProcessingTaskStatus.FAILED.value:
-            return False
         if task.target_queue_item_id is None:
             return False
         queue_item = (
@@ -945,7 +1008,7 @@ class TaskExecutionCoordinator:
                 self._task_contexts.pop(task_id, None)
 
     def cancel(self, task_id: int) -> bool:
-        """Request cancellation for a running or queued task."""
+        """Request cooperative cancellation for a running or queued task."""
         with self._lock:
             context = self._task_contexts.get(task_id)
             if context is None:
@@ -953,10 +1016,6 @@ class TaskExecutionCoordinator:
             cancel_event = context.get("cancel_event")
             if isinstance(cancel_event, threading.Event):
                 cancel_event.set()
-            loop = context.get("loop")
-            task = context.get("task")
-            if loop is not None and task is not None and not task.done():
-                loop.call_soon_threadsafe(task.cancel)
             return True
 
     def cancel_many(self, task_ids: list[int]) -> list[int]:
