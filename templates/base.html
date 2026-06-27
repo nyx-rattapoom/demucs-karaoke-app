@@ -10,7 +10,7 @@
     <!-- Fonts -->
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-    <link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@300;400;500;600;700&family=Inter:wght@300;400;500;600&display=swap" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@300;400;500;600;700&family=Inter:wght@300;400;500;600&family=Noto+Sans+Thai:wght@300;400;500;600;700&display=swap" rel="stylesheet">
     <link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&display=swap" rel="stylesheet">
     
     <!-- Tailwind CSS -->
@@ -40,8 +40,8 @@
                         "error": "#ff6e84"
                     },
                     fontFamily: {
-                        "headline": ["Space Grotesk", "sans-serif"],
-                        "body": ["Inter", "sans-serif"],
+                        "headline": ["Space Grotesk", "Noto Sans Thai", "sans-serif"],
+                        "body": ["Inter", "Noto Sans Thai", "sans-serif"],
                     },
                     borderRadius: {
                         "DEFAULT": "0.375rem",
@@ -73,6 +73,7 @@
         body {
             background: #0e0c1f;
             color: #e7e2fe;
+            font-family: "Inter", "Noto Sans Thai", sans-serif;
         }
     </style>
     
@@ -105,7 +106,7 @@
                         >
                             {% for locale in supported_locales() %}
                             <option value="{{ locale.code }}" {% if locale.code == current_locale(request) %}selected{% endif %}>
-                                {% if locale.code == 'en' %}EN{% else %}ZH{% endif %}
+                                {{ locale.code.split('-')[0]|upper }}
                             </option>
                             {% endfor %}
                         </select>
@@ -125,22 +126,16 @@
                         class="hidden absolute top-full right-0 mt-1 z-50 min-w-32 rounded-lg bg-surface-container border border-white/10 shadow-lg"
                     >
                         <div class="py-2">
+                            {% for locale in supported_locales() %}
                             <button
                                 type="button"
-                                data-language="en"
-                                class="w-full flex items-center gap-3 px-4 py-2 text-sm text-on-surface hover:bg-surface-container-high/50 transition-colors {% if current_locale(request) == 'en' %}bg-primary/10 text-primary{% endif %}"
+                                data-language="{{ locale.code }}"
+                                class="w-full flex items-center gap-3 px-4 py-2 text-sm text-on-surface hover:bg-surface-container-high/50 transition-colors {% if current_locale(request) == locale.code %}bg-primary/10 text-primary{% endif %}"
                             >
                                 <span class="material-symbols-outlined text-base">language</span>
-                                <span>English</span>
+                                <span>{{ locale.label }}</span>
                             </button>
-                            <button
-                                type="button"
-                                data-language="zh-CN"
-                                class="w-full flex items-center gap-3 px-4 py-2 text-sm text-on-surface hover:bg-surface-container-high/50 transition-colors {% if current_locale(request) == 'zh-CN' %}bg-primary/10 text-primary{% endif %}"
-                            >
-                                <span class="material-symbols-outlined text-base">language</span>
-                                <span>中文</span>
-                            </button>
+                            {% endfor %}
                         </div>
                     </div>
                 </div>
