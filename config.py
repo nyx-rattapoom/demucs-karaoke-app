@@ -71,7 +71,7 @@ class Settings(BaseSettings):
     demucs_device: str = "cuda"
     demucs_output_format: str = "wav"
     demucs_mp3_bitrate: int = 320
-    demucs_segment: float | None = None
+    demucs_segment: int | None = None
     demucs_shifts: int | None = None
     demucs_jobs: int | None = None
     demucs_overlap: float | None = None
