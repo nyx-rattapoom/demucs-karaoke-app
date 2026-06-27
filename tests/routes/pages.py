@@ -1,5 +1,6 @@
 from .common import *
 from routes.pages import build_docs_url
+from services.i18n_service import SUPPORTED_LOCALES
 
 
 def test_settings_page_renders_separation_backend_controls(client):
@@ -158,6 +159,22 @@ def test_queue_page_renders_simplified_chinese_locale(client):
     assert "搜索本地媒体库和 YouTube" in response.text
     assert 'id="language-select"' in response.text
 
+
+def test_queue_page_renders_thai_locale(client):
+    """Queue page should render the Thai locale selected via cookie."""
+    response = client.get("/queue", cookies={LOCALE_COOKIE: "th"})
+
+    assert response.status_code == 200
+    assert '<html class="dark" lang="th">' in response.text
+    # Catalog value is asserted by loading th.json so the test survives wording edits.
+    thai_catalog = _load_locale_catalog("th")
+    assert thai_catalog["queue.title"] in response.text
+    # The language popover loops over supported locales, so a Thai entry must exist.
+    assert 'data-language="th"' in response.text
+    # The selector option derives a short uppercase code from the locale: th -> TH.
+    assert re.search(r'value="th"[^>]*>\s*TH\s*<', response.text)
+    assert 'id="language-select"' in response.text
+
 def test_queue_page_renders_requester_label(client):
     """Queue page should render requester labels without template errors."""
     client.cookies.set("karaoke_singer", "Alex")
@@ -245,13 +262,51 @@ def test_language_route_rejects_external_redirect_targets(client):
     assert response.status_code == 302
     assert response.headers["location"] == "/queue"
 
-def test_locale_catalogs_have_matching_keys():
-    """Every supported locale should expose the same UI translation keys."""
-    locale_dir = Path("locales")
-    english_keys = set(json.loads((locale_dir / "en.json").read_text(encoding="utf-8")))
-    chinese_keys = set(json.loads((locale_dir / "zh-CN.json").read_text(encoding="utf-8")))
+def _load_locale_catalog(code):
+    return json.loads((Path("locales") / f"{code}.json").read_text(encoding="utf-8"))
 
-    assert chinese_keys == english_keys
+
+def _placeholders(value):
+    return sorted(re.findall(r"{[^}]*}", value))
+
+
+def test_locale_catalogs_have_matching_keys():
+    """Every supported locale should expose the same UI translation keys as English."""
+    english_keys = set(_load_locale_catalog("en"))
+
+    for code in SUPPORTED_LOCALES:
+        if code == "en":
+            continue
+        locale_keys = set(_load_locale_catalog(code))
+        assert locale_keys == english_keys, (
+            f"locale '{code}' key set differs from en: "
+            f"missing={english_keys - locale_keys}, extra={locale_keys - english_keys}"
+        )
+
+
+def test_locale_catalogs_have_matching_placeholders():
+    """Every locale value must preserve the same {placeholder} tokens as English.
+
+    translate() calls str.format(**params) and silently swallows KeyError/ValueError,
+    so a corrupted placeholder degrades to an unformatted string at runtime rather
+    than failing loudly. The key-set test cannot catch that; this test can.
+    """
+    english = _load_locale_catalog("en")
+
+    for code in SUPPORTED_LOCALES:
+        if code == "en":
+            continue
+        catalog = _load_locale_catalog(code)
+        mismatches = {
+            key: (_placeholders(english[key]), _placeholders(catalog[key]))
+            for key in english
+            if key in catalog
+            and _placeholders(english[key]) != _placeholders(catalog[key])
+        }
+        assert not mismatches, (
+            f"locale '{code}' has placeholder mismatches: "
+            f"{dict(list(mismatches.items())[:10])}"
+        )
 
 def test_queue_page_shows_admin_queue_controls(client):
     """Admin queue page should show destructive queue controls."""
