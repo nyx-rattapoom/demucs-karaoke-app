@@ -976,7 +976,8 @@ async function openQueueConfigModal(resultElement, triggerButton) {
 
     const defaults = getModalDefaults();
     modalKaraokeEnabled = defaults.karaokeEnabled;
-    modalAlignLyricsEnabled = Boolean(defaults.karaokeEnabled && defaults.lyricsEnabled);
+    // Word alignment must be opted into explicitly; never auto-enable on modal open.
+    modalAlignLyricsEnabled = false;
     lyricsManager.reset();
     lyricsManager.setMetadata(modalSelection.title || '', modalSelection.channel || '', modalSelection.title || '');
     lyricsManager.setEnabled(defaults.lyricsEnabled);
@@ -1320,9 +1321,8 @@ if (queueConfigKaraokeToggle) {
         if (queueConfigKaraokeToggle.disabled) return;
         modalKaraokeEnabled = !modalKaraokeEnabled;
         if (!modalKaraokeEnabled) {
+            // Karaoke off ⇒ alignment cannot run; force it off. Never auto-enable.
             modalAlignLyricsEnabled = false;
-        } else if (lyricsManager?.state.lyricsEnabled) {
-            modalAlignLyricsEnabled = true;
         }
         if (modalKaraokeEnabled && getModalTitleHints().karaokeLike) {
             showQueueToast(t('queue.karaoke_already'));
@@ -1347,7 +1347,10 @@ if (queueConfigLyricsToggle) {
             lyricsManager.setMetadata(modalSelection.title || '', modalSelection.channel || '', modalSelection.title || '');
         }
         lyricsManager.setEnabled(newEnabled);
-        modalAlignLyricsEnabled = Boolean(newEnabled);
+        // Lyrics off ⇒ alignment cannot run; force it off. Lyrics on must NOT auto-enable alignment.
+        if (!newEnabled) {
+            modalAlignLyricsEnabled = false;
+        }
 
         if (newEnabled) {
             if (getModalTitleHints().lyricsLike) {
