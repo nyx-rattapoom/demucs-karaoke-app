@@ -45,7 +45,7 @@ class SeparateConfig(BaseModel):
     device: Literal["cuda", "cpu"] = DEFAULT_DEMUCS_DEVICE
     output_format: Literal["wav", "mp3"] = DEFAULT_OUTPUT_FORMAT
     mp3_bitrate: int | None = Field(default=None, ge=64, le=320)
-    segment: float | None = Field(default=DEFAULT_DEMUCS_SEGMENT, ge=1, le=60)
+    segment: int | None = Field(default=DEFAULT_DEMUCS_SEGMENT, ge=1, le=60)
     shifts: int | None = Field(default=DEFAULT_DEMUCS_SHIFTS, ge=0, le=10)
     jobs: int | None = Field(default=DEFAULT_DEMUCS_JOBS, ge=1, le=4)
     overlap: float | None = Field(default=DEFAULT_DEMUCS_OVERLAP, ge=0.0, le=0.99)

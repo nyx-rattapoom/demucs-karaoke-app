@@ -42,7 +42,7 @@ class DemucsSettings(BaseSettings):
         default="ffmpeg",
         validation_alias="SHERPA_SPLEETER_FFMPEG_PATH",
     )
-    demucs_segment: float | None = None
+    demucs_segment: int | None = None
     demucs_shifts: int | None = None
     demucs_jobs: int | None = None
     demucs_overlap: float | None = None

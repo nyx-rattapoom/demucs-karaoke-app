@@ -1831,13 +1831,13 @@ def test_build_command_includes_tuning_flags():
         device="cpu",
         output_format="mp3",
         mp3_bitrate=192,
-        segment=7.8,
+        segment=7,
         shifts=0,
         jobs=2,
         overlap=0.25,
     )
     cmd = demucs_runner._build_command(Path("in.wav"), Path("out"), config)
-    assert "--segment" in cmd and cmd[cmd.index("--segment") + 1] == "7.8"
+    assert "--segment" in cmd and cmd[cmd.index("--segment") + 1] == "7"
     assert "--shifts" in cmd and cmd[cmd.index("--shifts") + 1] == "0"
     assert "-j" in cmd and cmd[cmd.index("-j") + 1] == "2"
     assert "--overlap" in cmd and cmd[cmd.index("--overlap") + 1] == "0.25"
@@ -1870,23 +1870,23 @@ def test_separate_config_overlap_validation():
         demucs_models.SeparateConfig(overlap=-0.1)
 
 
-def test_build_command_accepts_float_segment():
+def test_build_command_accepts_int_segment():
     config = demucs_models.SeparateConfig(
         device="cpu",
         output_format="wav",
-        segment=7.8,
+        segment=7,
     )
-    assert config.segment == 7.8
+    assert config.segment == 7
     cmd = demucs_runner._build_command(Path("in.wav"), Path("out"), config)
-    assert "--segment" in cmd and cmd[cmd.index("--segment") + 1] == "7.8"
+    assert "--segment" in cmd and cmd[cmd.index("--segment") + 1] == "7"
 
 
 def test_separate_config_segment_validation():
     import pytest
     from pydantic import ValidationError
 
-    assert demucs_models.SeparateConfig(segment=7.8).segment == 7.8
+    assert demucs_models.SeparateConfig(segment=7).segment == 7
     with pytest.raises(ValidationError):
-        demucs_models.SeparateConfig(segment=0.5)
+        demucs_models.SeparateConfig(segment=0)
     with pytest.raises(ValidationError):
         demucs_models.SeparateConfig(segment=61)

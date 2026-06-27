@@ -74,7 +74,7 @@ class Settings(BaseSettings):
     demucs_mp3_bitrate: int = 320
     separation_backend: str = "demucs"
     sherpa_spleeter_model: str = "fp16"
-    demucs_segment: float | None = None
+    demucs_segment: int | None = None
     demucs_shifts: int | None = None
     demucs_jobs: int | None = None
     demucs_overlap: float | None = None
