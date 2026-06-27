@@ -13,6 +13,7 @@ DEFAULT_LOCALE = "en"
 SUPPORTED_LOCALES = {
     "en": "English",
     "zh-CN": "简体中文",
+    "th": "ไทย",
 }
 _LOCALE_DIR = Path(__file__).resolve().parent.parent / "locales"
 
@@ -36,6 +37,8 @@ def normalize_locale(locale: str | None) -> str | None:
     lowered = cleaned.lower()
     if lowered == "zh" or lowered.startswith("zh-cn") or lowered.startswith("zh-hans"):
         return "zh-CN"
+    if lowered == "th" or lowered.startswith("th-"):
+        return "th"
     if lowered.startswith("en"):
         return "en"
     return None
