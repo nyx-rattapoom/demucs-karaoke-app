@@ -2,6 +2,10 @@
 
 Lightweight AI-powered karaoke application for home use.
 
+## About This Fork
+
+Fork of [`vttc08/demucs-karaoke-app`](https://github.com/vttc08/demucs-karaoke-app). For what this fork adds and changes on top of upstream, see [Fork Changes](docs/fork-changes.md).
+
 ## Features
 
 - **Mobile Queue Page**: Search YouTube, add songs to queue
